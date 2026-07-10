@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    container_name: medilocal-postgres
+    environment:
+      POSTGRES_USER: medilocal
+      POSTGRES_PASSWORD: medilocal
+      POSTGRES_DB: medilocal
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres-init/20-drop-extra-extensions.sql:/docker-entrypoint-initdb.d/zz-drop-extra-extensions.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U medilocal -d medilocal"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    container_name: medilocal-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
+  redisdata:

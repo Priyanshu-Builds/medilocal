@@ -1,0 +1,16 @@
+{
+  "name": "medilocal",
+  "private": true,
+  "packageManager": "pnpm@10.12.1",
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:migrate": "pnpm --filter @medilocal/api db:migrate",
+    "db:seed": "pnpm --filter @medilocal/api db:seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4"
+  }
+}

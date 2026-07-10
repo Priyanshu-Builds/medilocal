@@ -1,0 +1,402 @@
+// MediLocal data model. Money columns are DECIMAL(10,2) in INR.
+// PostGIS is enabled for zone polygons / geo queries (added via raw SQL when needed);
+// pg_trgm powers fuzzy medicine search.
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  url        = env("DATABASE_URL")
+  extensions = [postgis, pg_trgm]
+}
+
+// ── Enums ────────────────────────────────────────────────────────────────
+
+enum OrderState {
+  PLACED
+  RX_REVIEW
+  ACCEPTED
+  PACKED
+  RIDER_ASSIGNED
+  PICKED_UP
+  OUT_FOR_DELIVERY
+  DELIVERED
+  RX_REJECTED
+  CANCELLED
+  UNDELIVERED
+}
+
+enum PaymentState {
+  PENDING
+  PAID
+  PARTIALLY_REFUNDED
+  REFUNDED
+  COD_DUE
+  COD_COLLECTED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  COD
+}
+
+enum RxStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+// Indian drug schedules: NONE = OTC; H/H1 need a prescription; X is never sold online.
+enum DrugSchedule {
+  NONE
+  H
+  H1
+  X
+}
+
+enum AdminRole {
+  SUPER_ADMIN
+  OPS
+  PHARMACIST
+  SUPPORT
+  FINANCE
+}
+
+enum ShopStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum AssignmentStatus {
+  OFFERED
+  ACCEPTED
+  PICKED_UP
+  DELIVERED
+  CANCELLED
+}
+
+enum ActorType {
+  CUSTOMER
+  SHOP
+  RIDER
+  ADMIN
+  SYSTEM
+}
+
+// ── Geography ────────────────────────────────────────────────────────────
+
+model City {
+  id        String   @id @default(cuid())
+  name      String
+  state     String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  zones Zone[]
+  shops Shop[]
+}
+
+// A zone is a delivery area within a city with its own fee/limit config.
+// The boundary polygon (PostGIS geography) is managed via raw SQL migration later.
+model Zone {
+  id             String   @id @default(cuid())
+  cityId         String
+  name           String
+  deliveryFeeInr Decimal  @default(30) @db.Decimal(10, 2)
+  minOrderInr    Decimal  @default(99) @db.Decimal(10, 2)
+  codCapInr      Decimal  @default(1500) @db.Decimal(10, 2)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  city      City      @relation(fields: [cityId], references: [id])
+  shops     Shop[]
+  addresses Address[]
+  orders    Order[]
+}
+
+// ── Customers ────────────────────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  firebaseUid String?  @unique
+  name        String?
+  email       String?
+  fcmToken    String?
+  isBlocked   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  addresses Address[]
+  orders    Order[]
+}
+
+model Address {
+  id        String   @id @default(cuid())
+  userId    String
+  zoneId    String?
+  label     String   @default("Home")
+  line1     String
+  line2     String?
+  landmark  String?
+  pincode   String?
+  lat       Float
+  lng       Float
+  createdAt DateTime @default(now())
+
+  user User  @relation(fields: [userId], references: [id])
+  zone Zone? @relation(fields: [zoneId], references: [id])
+}
+
+// ── Shops & catalog ──────────────────────────────────────────────────────
+
+model Shop {
+  id            String     @id @default(cuid())
+  cityId        String
+  zoneId        String
+  name          String
+  licenseNo     String
+  gstin         String?
+  phone         String
+  email         String?
+  addressLine   String
+  lat           Float
+  lng           Float
+  commissionPct Decimal    @default(10) @db.Decimal(5, 2)
+  status        ShopStatus @default(PENDING)
+  openTime      String? // "09:00"
+  closeTime     String? // "22:00"
+  createdAt     DateTime   @default(now())
+
+  city      City            @relation(fields: [cityId], references: [id])
+  zone      Zone            @relation(fields: [zoneId], references: [id])
+  staff     ShopStaff[]
+  inventory ShopInventory[]
+  orders    Order[]
+}
+
+model ShopStaff {
+  id               String   @id @default(cuid())
+  shopId           String
+  name             String
+  email            String   @unique
+  phone            String
+  passwordHash     String
+  isPharmacist     Boolean  @default(false)
+  pharmacistRegNo  String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  shop Shop @relation(fields: [shopId], references: [id])
+}
+
+// Master catalog managed by admin; shops attach price/stock via ShopInventory.
+model Medicine {
+  id           String       @id @default(cuid())
+  name         String
+  brand        String?
+  genericName  String? // salt/composition, e.g. "Paracetamol 650mg"
+  manufacturer String?
+  mrpInr       Decimal      @db.Decimal(10, 2)
+  packSize     String? // e.g. "Strip of 15 tablets"
+  schedule     DrugSchedule @default(NONE)
+  rxRequired   Boolean      @default(false)
+  imageUrl     String?
+  isActive     Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+
+  inventory  ShopInventory[]
+  orderItems OrderItem[]
+
+  @@index([name])
+}
+
+model ShopInventory {
+  id         String   @id @default(cuid())
+  shopId     String
+  medicineId String
+  priceInr   Decimal  @db.Decimal(10, 2) // must be <= medicine MRP (enforced in service layer)
+  inStock    Boolean  @default(true)
+  updatedAt  DateTime @updatedAt
+
+  shop     Shop     @relation(fields: [shopId], references: [id])
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+
+  @@unique([shopId, medicineId])
+}
+
+// ── Orders ───────────────────────────────────────────────────────────────
+
+model Order {
+  id              String        @id @default(cuid())
+  code            String        @unique // human-readable, e.g. ML-250712-0001
+  userId          String
+  shopId          String
+  zoneId          String
+  state           OrderState    @default(PLACED)
+  paymentState    PaymentState
+  paymentMethod   PaymentMethod
+  requiresRx      Boolean       @default(false)
+  addressSnapshot Json // frozen copy of the delivery address at order time
+  itemsTotalInr   Decimal       @db.Decimal(10, 2)
+  deliveryFeeInr  Decimal       @db.Decimal(10, 2)
+  discountInr     Decimal       @default(0) @db.Decimal(10, 2)
+  grandTotalInr   Decimal       @db.Decimal(10, 2)
+  placedAt        DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  user          User                @relation(fields: [userId], references: [id])
+  shop          Shop                @relation(fields: [shopId], references: [id])
+  zone          Zone                @relation(fields: [zoneId], references: [id])
+  items         OrderItem[]
+  statusHistory OrderStatusHistory[]
+  prescriptions Prescription[]
+  payments      Payment[]
+  assignment    DeliveryAssignment?
+
+  @@index([state])
+  @@index([userId])
+  @@index([shopId])
+}
+
+model OrderItem {
+  id               String   @id @default(cuid())
+  orderId          String
+  medicineId       String
+  nameSnapshot     String
+  priceInrSnapshot Decimal  @db.Decimal(10, 2)
+  qty              Int
+  accepted         Boolean? // null until shop confirms; false = dropped (partial acceptance)
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  medicine Medicine @relation(fields: [medicineId], references: [id])
+}
+
+model OrderStatusHistory {
+  id        String      @id @default(cuid())
+  orderId   String
+  fromState OrderState?
+  toState   OrderState
+  note      String?
+  actorType ActorType
+  actorId   String?
+  createdAt DateTime    @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+model Prescription {
+  id              String    @id @default(cuid())
+  orderId         String
+  fileKey         String // S3 object key, served via time-limited signed URLs only
+  status          RxStatus  @default(PENDING)
+  verifiedById    String? // ShopStaff or AdminUser id
+  verifiedAt      DateTime?
+  rejectionReason String?
+  createdAt       DateTime  @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+}
+
+// ── Delivery ─────────────────────────────────────────────────────────────
+
+model Rider {
+  id            String   @id @default(cuid())
+  name          String
+  phone         String   @unique
+  vehicleNo     String?
+  isActive      Boolean  @default(true)
+  cashInHandInr Decimal  @default(0) @db.Decimal(10, 2) // COD ledger, reconciled daily
+  fcmToken      String?
+  createdAt     DateTime @default(now())
+
+  assignments DeliveryAssignment[]
+  locations   RiderLocation[]
+}
+
+model DeliveryAssignment {
+  id              String           @id @default(cuid())
+  orderId         String           @unique
+  riderId         String
+  status          AssignmentStatus @default(OFFERED)
+  offeredAt       DateTime         @default(now())
+  acceptedAt      DateTime?
+  pickedUpAt      DateTime?
+  deliveredAt     DateTime?
+  codCollectedInr Decimal?         @db.Decimal(10, 2)
+
+  order Order @relation(fields: [orderId], references: [id])
+  rider Rider @relation(fields: [riderId], references: [id])
+}
+
+// Sampled GPS history (live location lives in Redis).
+model RiderLocation {
+  id         String   @id @default(cuid())
+  riderId    String
+  lat        Float
+  lng        Float
+  recordedAt DateTime @default(now())
+
+  rider Rider @relation(fields: [riderId], references: [id])
+
+  @@index([riderId, recordedAt])
+}
+
+// ── Payments ─────────────────────────────────────────────────────────────
+
+model Payment {
+  id                String        @id @default(cuid())
+  orderId           String
+  method            PaymentMethod
+  amountInr         Decimal       @db.Decimal(10, 2)
+  status            String // created | captured | failed | cod_due | cod_collected
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  razorpaySignature String?
+  raw               Json?
+  createdAt         DateTime      @default(now())
+
+  order   Order    @relation(fields: [orderId], references: [id])
+  refunds Refund[]
+}
+
+model Refund {
+  id               String   @id @default(cuid())
+  paymentId        String
+  amountInr        Decimal  @db.Decimal(10, 2)
+  status           String // initiated | processed | failed
+  razorpayRefundId String?
+  reason           String?
+  createdAt        DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id])
+}
+
+// ── Admin & audit ────────────────────────────────────────────────────────
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  passwordHash String
+  role         AdminRole
+  totpSecret   String?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+}
+
+model AuditLog {
+  id        String    @id @default(cuid())
+  actorType ActorType
+  actorId   String?
+  action    String // e.g. "order.force_cancel", "medicine.update"
+  entity    String
+  entityId  String?
+  data      Json?
+  createdAt DateTime  @default(now())
+
+  @@index([entity, entityId])
+}

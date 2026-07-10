@@ -1,0 +1,23 @@
+name: medilocal_customer
+description: MediLocal customer app — order medicines from local pharmacies.
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  # M3 additions (kept out of M0 so the app runs with zero external setup):
+  # firebase_core, firebase_auth (phone OTP), firebase_messaging (push),
+  # google_maps_flutter, razorpay_flutter, socket_io_client, image_picker (Rx upload)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

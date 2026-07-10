@@ -1,0 +1,28 @@
+# Node
+node_modules/
+dist/
+.next/
+.turbo/
+*.tsbuildinfo
+coverage/
+
+# Env — never commit real secrets
+.env
+.env.local
+.env.*.local
+
+# Prisma generated client output (regenerated on install)
+apps/api/generated/
+
+# Flutter
+mobile/*/.dart_tool/
+mobile/*/build/
+mobile/*/.flutter-plugins
+mobile/*/.flutter-plugins-dependencies
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Claude Code personal settings (machine-specific)
+.claude/settings.local.json
