@@ -1,8 +1,10 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { DashboardLoginDto, FirebaseLoginDto, RefreshDto } from './dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { Auth } from '../common/auth.decorator';
+import { CurrentUser } from '../common/current-user.decorator';
+import { DashboardLoginDto, DevLoginDto, FirebaseLoginDto, RefreshDto } from './dto';
+import type { JwtPayload } from '../common/jwt-payload';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -27,6 +29,20 @@ export class AuthController {
     return this.auth.customerFirebaseLogin(dto.idToken);
   }
 
+  @Post('rider/firebase')
+  @ApiOperation({ summary: 'Rider login: same Firebase phone OTP, but only pre-registered riders' })
+  riderFirebase(@Body() dto: FirebaseLoginDto) {
+    return this.auth.riderFirebaseLogin(dto.idToken);
+  }
+
+  @Post('dev/login')
+  @ApiOperation({
+    summary: 'DEV ONLY: mint a customer/rider token by phone (requires DEV_LOGIN_ENABLED=true)',
+  })
+  devLogin(@Body() dto: DevLoginDto) {
+    return this.auth.devLogin(dto.kind, dto.phone);
+  }
+
   @Post('refresh')
   @ApiOperation({ summary: 'Exchange a refresh token for a new token pair' })
   refresh(@Body() dto: RefreshDto) {
@@ -34,10 +50,9 @@ export class AuthController {
   }
 
   @Get('me')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @Auth()
   @ApiOperation({ summary: 'Decode the current bearer token (sanity check for clients)' })
-  me(@Req() req: { user: unknown }) {
-    return req.user;
+  me(@CurrentUser() user: JwtPayload) {
+    return user;
   }
 }

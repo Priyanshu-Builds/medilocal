@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsString, MinLength } from 'class-validator';
 
 export class DashboardLoginDto {
   @ApiProperty({ example: 'admin@medilocal.local' })
@@ -22,4 +22,15 @@ export class RefreshDto {
   @ApiProperty()
   @IsString()
   refreshToken: string;
+}
+
+export class DevLoginDto {
+  @ApiProperty({ enum: ['customer', 'rider'] })
+  @IsIn(['customer', 'rider'])
+  kind: 'customer' | 'rider';
+
+  @ApiProperty({ example: '9800000010', description: 'Phone number (rider must already exist)' })
+  @IsString()
+  @MinLength(10)
+  phone: string;
 }

@@ -37,6 +37,31 @@ export function canTransition(from: OrderState, to: OrderState): boolean {
   return ORDER_STATE_TRANSITIONS[from].includes(to);
 }
 
+export const TERMINAL_ORDER_STATES = [
+  'DELIVERED',
+  'RX_REJECTED',
+  'CANCELLED',
+  'UNDELIVERED',
+] as const satisfies readonly OrderState[];
+
+export function isTerminalOrderState(state: OrderState): boolean {
+  return (TERMINAL_ORDER_STATES as readonly OrderState[]).includes(state);
+}
+
+/**
+ * Customers may self-cancel until the shop has packed the order; beyond that
+ * cancellation goes through ops (admin override) so the shop/rider aren't
+ * left holding a packed bag.
+ */
+export const CUSTOMER_CANCELLABLE_STATES = [
+  'PLACED',
+  'RX_REVIEW',
+  'ACCEPTED',
+] as const satisfies readonly OrderState[];
+
+/** 4-digit handoff code the rider must enter to mark an order DELIVERED. */
+export const DELIVERY_OTP_LENGTH = 4;
+
 /** Payment lifecycle is tracked separately from order state. */
 export const PAYMENT_STATES = [
   'PENDING',

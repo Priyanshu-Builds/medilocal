@@ -3,8 +3,9 @@ import { ConfigService } from '@nestjs/config';
 import * as admin from 'firebase-admin';
 
 /**
- * Wraps Firebase Admin. Boots in "disabled" mode when service-account env vars
- * are absent so local development works before a Firebase project exists.
+ * Wraps Firebase Admin (Auth for phone-OTP verification, Messaging for FCM).
+ * Boots in "disabled" mode when service-account env vars are absent so local
+ * development works before a Firebase project exists.
  */
 @Injectable()
 export class FirebaseService implements OnModuleInit {
@@ -19,7 +20,7 @@ export class FirebaseService implements OnModuleInit {
     const privateKey = this.config.get<string>('FIREBASE_PRIVATE_KEY');
 
     if (!projectId || !clientEmail || !privateKey) {
-      this.logger.warn('Firebase env vars not set — customer phone login disabled until configured');
+      this.logger.warn('Firebase env vars not set — phone login and FCM push disabled until configured');
       return;
     }
 
@@ -42,5 +43,25 @@ export class FirebaseService implements OnModuleInit {
       throw new ServiceUnavailableException('Firebase is not configured on this server');
     }
     return this.app.auth().verifyIdToken(idToken);
+  }
+
+  /**
+   * Fire an FCM push to a single device. Returns false (never throws) when
+   * Firebase is disabled or the send fails — notifications are best-effort
+   * and must never break an order flow.
+   */
+  async sendPush(
+    fcmToken: string,
+    notification: { title: string; body: string },
+    data: Record<string, string> = {},
+  ): Promise<boolean> {
+    if (!this.app) return false;
+    try {
+      await this.app.messaging().send({ token: fcmToken, notification, data });
+      return true;
+    } catch (err) {
+      this.logger.warn(`FCM send failed: ${(err as Error).message}`);
+      return false;
+    }
   }
 }

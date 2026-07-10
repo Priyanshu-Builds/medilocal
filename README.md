@@ -50,7 +50,25 @@ Then:
 
 Try the fuzzy search (misspellings on purpose): `http://localhost:3000/v1/catalog/medicines?q=dollo`
 
-Environment lives in `apps/api/.env` (see `.env.example` for all keys). Dev defaults work out of the box; Firebase/Razorpay/S3 keys are only needed from M1 onward.
+Environment lives in `apps/api/.env` (see `.env.example` for all keys). Dev defaults work out of the box: COD orders, catalog, cart and the full order state machine run with **no external keys**. Firebase enables customer/rider phone login + push, Razorpay enables online payments, S3 enables prescription upload — each feature switches on independently when its keys are present.
+
+## Trying the M1 order flow locally (no Firebase/Razorpay needed)
+
+Set `DEV_LOGIN_ENABLED=true` in `apps/api/.env` (never in production), then from Swagger (`/docs`) or curl:
+
+1. `POST /v1/auth/dev/login` `{"kind":"customer","phone":"9811111111"}` → customer token
+2. `GET /v1/zones` → zone id · `POST /v1/me/addresses` (with that `zoneId`) → address id
+3. `POST /v1/cart/quote` with `{zoneId, items:[{medicineId, qty}]}` (ids from catalog search) → priced quote
+4. `POST /v1/orders` `{addressId, paymentMethod:"COD", items:[...]}` → order + 4-digit delivery OTP
+5. Shop side (`POST /v1/auth/shop/login`, seeded creds): `GET /v1/shop/orders` → `POST /v1/shop/orders/:id/accept` (item-by-item) → `/pack`
+6. Admin side: `POST /v1/admin/orders/:id/assign-rider` (rider from `GET /v1/admin/riders`)
+7. Rider side (`dev/login` kind `rider`, phone `9800000003`): `/pickup` → `/out-for-delivery` → `/deliver` with the customer's OTP — wrong OTP is rejected; COD lands in the rider cash ledger.
+
+Razorpay online payment: put test keys + webhook secret in `.env`, point a [Razorpay webhook](https://dashboard.razorpay.com) (`payment.captured`) at `POST /v1/payments/razorpay/webhook`; orders stay hidden from the shop until the webhook (or the checkout `verify` endpoint) marks them PAID.
+
+## Dart API client (Flutter apps)
+
+`apps/api/openapi.json` is the committed contract (CI fails if it drifts from the code — regenerate with `pnpm openapi:export`). Generate the Dart client with `pnpm gen:dart-client` (needs Java, or use the `openapitools/openapi-generator-cli` Docker image) → `mobile/api_client/`, wired into the Flutter apps in M3/M4.
 
 ## Firebase setup (needed for customer login, M1+)
 
@@ -68,7 +86,7 @@ Environment lives in `apps/api/.env` (see `.env.example` for all keys). Dev defa
 ## Roadmap
 
 - [x] **M0** — Monorepo scaffold: API + schema + seed + Swagger, dashboard shells with login, Flutter app sources, CI
-- [ ] **M1** — Backend core: catalog, cart/pricing, order state machine, Rx upload (S3), Razorpay + webhook + COD, FCM
+- [x] **M1** — Backend core: catalog, cart/pricing, order state machine, Rx upload (S3), Razorpay + webhook + COD, FCM
 - [ ] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
 - [ ] **M3** — Customer app: search → cart → checkout → track
 - [ ] **M4** — Rider app: shifts, tasks, background GPS, COD collection

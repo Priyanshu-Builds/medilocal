@@ -1,18 +1,13 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { FirebaseService } from './firebase.service';
+import { FirebaseService } from '../firebase/firebase.service';
+import { last10Digits } from '../common/phone';
 import { PrismaService } from '../prisma/prisma.service';
+import type { JwtPayload, TokenKind } from '../common/jwt-payload';
 
-export type TokenKind = 'admin' | 'shop' | 'customer';
-
-export interface JwtPayload {
-  sub: string;
-  kind: TokenKind;
-  role?: string;
-  shopId?: string;
-}
+export type { JwtPayload, TokenKind };
 
 @Injectable()
 export class AuthService {
@@ -87,6 +82,55 @@ export class AuthService {
     return { ...tokens, user: { id: user.id, phone: user.phone, name: user.name } };
   }
 
+  /**
+   * Rider login uses the same Firebase phone OTP, but riders are pre-created by
+   * admin — an unknown phone is rejected, never auto-registered.
+   */
+  async riderFirebaseLogin(idToken: string) {
+    const decoded = await this.firebase.verifyIdToken(idToken);
+    const phone = decoded.phone_number;
+    if (!phone) {
+      throw new UnauthorizedException('Firebase token has no phone number');
+    }
+    const rider = await this.findRiderByPhone(phone);
+    if (!rider || !rider.isActive) {
+      throw new UnauthorizedException('No active rider account for this phone number');
+    }
+    const tokens = await this.issueTokens({ sub: rider.id, kind: 'rider' });
+    return { ...tokens, user: { id: rider.id, phone: rider.phone, name: rider.name } };
+  }
+
+  /**
+   * Dev-only token mint so the order flow can be exercised locally / in e2e
+   * tests without a Firebase project. Hard-disabled unless DEV_LOGIN_ENABLED=true
+   * and not running in production.
+   */
+  async devLogin(kind: 'customer' | 'rider', phone: string) {
+    const enabled =
+      this.config.get('DEV_LOGIN_ENABLED') === 'true' &&
+      this.config.get('NODE_ENV') !== 'production';
+    if (!enabled) {
+      throw new ForbiddenException('Dev login is disabled on this server');
+    }
+
+    if (kind === 'rider') {
+      const rider = await this.findRiderByPhone(phone);
+      if (!rider || !rider.isActive) {
+        throw new UnauthorizedException('No active rider with this phone');
+      }
+      const tokens = await this.issueTokens({ sub: rider.id, kind: 'rider' });
+      return { ...tokens, user: { id: rider.id, phone: rider.phone, name: rider.name } };
+    }
+
+    const user = await this.prisma.user.upsert({
+      where: { phone },
+      update: {},
+      create: { phone },
+    });
+    const tokens = await this.issueTokens({ sub: user.id, kind: 'customer' });
+    return { ...tokens, user: { id: user.id, phone: user.phone, name: user.name } };
+  }
+
   async refresh(refreshToken: string) {
     try {
       const payload = await this.jwt.verifyAsync<JwtPayload>(refreshToken, {
@@ -101,5 +145,11 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  private async findRiderByPhone(phone: string) {
+    const riders = await this.prisma.rider.findMany({ where: { isActive: true } });
+    const needle = last10Digits(phone);
+    return riders.find((r) => last10Digits(r.phone) === needle) ?? null;
   }
 }

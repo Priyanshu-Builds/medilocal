@@ -1,0 +1,2233 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/auth/admin/login": {
+      "post": {
+        "operationId": "AuthController_adminLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Admin dashboard login (email + password)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/shop/login": {
+      "post": {
+        "operationId": "AuthController_shopLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Pharmacy dashboard login (email + password)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/customer/firebase": {
+      "post": {
+        "operationId": "AuthController_customerFirebase",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Customer login: exchange a Firebase phone-auth ID token for API JWTs",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/rider/firebase": {
+      "post": {
+        "operationId": "AuthController_riderFirebase",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FirebaseLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Rider login: same Firebase phone OTP, but only pre-registered riders",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/dev/login": {
+      "post": {
+        "operationId": "AuthController_devLogin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DevLoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "DEV ONLY: mint a customer/rider token by phone (requires DEV_LOGIN_ENABLED=true)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "summary": "Exchange a refresh token for a new token pair",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/auth/me": {
+      "get": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Decode the current bearer token (sanity check for clients)",
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/v1/zones": {
+      "get": {
+        "operationId": "ZonesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Active delivery zones with per-zone fee/min-order/COD-cap config",
+        "tags": [
+          "zones"
+        ]
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "operationId": "UsersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Current customer profile with saved addresses",
+        "tags": [
+          "me"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_updateMe",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update profile (name/email)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/fcm-token": {
+      "put": {
+        "operationId": "UsersController_saveFcmToken",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FcmTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register this device for push notifications (customer or rider token)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/addresses": {
+      "post": {
+        "operationId": "UsersController_createAddress",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a delivery address (must carry a zoneId from GET /v1/zones)",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/me/addresses/{id}": {
+      "patch": {
+        "operationId": "UsersController_updateAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAddressDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a saved address",
+        "tags": [
+          "me"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteAddress",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a saved address",
+        "tags": [
+          "me"
+        ]
+      }
+    },
+    "/v1/catalog/medicines": {
+      "get": {
+        "operationId": "CatalogController_search",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Search text (min 2 chars); omit to list",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zoneId",
+            "required": false,
+            "in": "query",
+            "description": "Restrict to in-stock items in this delivery zone",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "List/search medicines (fuzzy: tolerates misspellings like \"dollo\"). Pass zoneId to only see what is in stock nearby, with the cheapest in-zone price.",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/v1/catalog/medicines/{id}": {
+      "get": {
+        "operationId": "CatalogController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "zoneId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Medicine detail; with zoneId includes which in-zone shops stock it",
+        "tags": [
+          "catalog"
+        ]
+      }
+    },
+    "/v1/shops": {
+      "get": {
+        "operationId": "ShopsController_list",
+        "parameters": [
+          {
+            "name": "zoneId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Active shops (optionally filtered to a zone)",
+        "tags": [
+          "shops"
+        ]
+      }
+    },
+    "/v1/shops/{id}": {
+      "get": {
+        "operationId": "ShopsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "Public shop details",
+        "tags": [
+          "shops"
+        ]
+      }
+    },
+    "/v1/shop/inventory": {
+      "get": {
+        "operationId": "ShopInventoryController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "Filter by medicine name",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My shop inventory (staff)",
+        "tags": [
+          "shop-portal"
+        ]
+      },
+      "post": {
+        "operationId": "ShopInventoryController_upsert",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertInventoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a catalog medicine to my inventory (price must be ≤ MRP)",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/shop/inventory/{medicineId}": {
+      "put": {
+        "operationId": "ShopInventoryController_update",
+        "parameters": [
+          {
+            "name": "medicineId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInventoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update price / stock flag for one medicine",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/admin/shops": {
+      "get": {
+        "operationId": "AdminShopsController_listShops",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "All shops incl. pending/suspended",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminShopsController_createShop",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShopDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Onboard a shop (created PENDING until license is verified)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/shops/{id}": {
+      "patch": {
+        "operationId": "AdminShopsController_updateShop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateShopDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Update shop details / activate / suspend",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/shops/{id}/staff": {
+      "post": {
+        "operationId": "AdminShopsController_createStaff",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateShopStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a pharmacy-portal login for a shop",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/shops/{id}/inventory": {
+      "post": {
+        "operationId": "AdminShopsController_upsertShopInventory",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsertInventoryDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ops-assisted: add/update inventory on a shop’s behalf",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/riders": {
+      "get": {
+        "operationId": "AdminShopsController_listRiders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "All riders (for manual assignment)",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminShopsController_createRider",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRiderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a rider (logs in via phone OTP on the rider app)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/cart/quote": {
+      "post": {
+        "operationId": "CartController_quote",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartQuoteDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Price a cart: per-item availability & prices, delivery fee, min-order and COD checks, Rx flags. Call before checkout.",
+        "tags": [
+          "cart"
+        ]
+      }
+    },
+    "/v1/payments/razorpay/verify": {
+      "post": {
+        "operationId": "PaymentsController_verify",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutVerifyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify the Razorpay Checkout success signature and confirm the payment",
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/v1/orders": {
+      "post": {
+        "operationId": "OrdersController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Place an order. Server re-prices everything; Razorpay orders return checkout params and stay PENDING until the payment webhook confirms.",
+        "tags": [
+          "orders"
+        ]
+      },
+      "get": {
+        "operationId": "OrdersController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My orders (latest first)",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}": {
+      "get": {
+        "operationId": "OrdersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My order detail — includes the delivery code to hand to the rider",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/orders/{id}/cancel": {
+      "post": {
+        "operationId": "OrdersController_cancel",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Cancel my order (allowed until the shop packs it); prepaid amounts auto-refund",
+        "tags": [
+          "orders"
+        ]
+      }
+    },
+    "/v1/shop/orders": {
+      "get": {
+        "operationId": "ShopOrdersController_list",
+        "parameters": [
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PLACED",
+                "RX_REVIEW",
+                "ACCEPTED",
+                "PACKED",
+                "RIDER_ASSIGNED",
+                "PICKED_UP",
+                "OUT_FOR_DELIVERY",
+                "DELIVERED",
+                "RX_REJECTED",
+                "CANCELLED",
+                "UNDELIVERED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Orders for my shop (unpaid online orders are hidden until payment lands)",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/shop/orders/{id}": {
+      "get": {
+        "operationId": "ShopOrdersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Order detail for my shop",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/shop/orders/{id}/accept": {
+      "post": {
+        "operationId": "ShopOrdersController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShopAcceptDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Confirm availability item-by-item. Dropped items auto-refund; zero available items cancels the order.",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/shop/orders/{id}/pack": {
+      "post": {
+        "operationId": "ShopOrdersController_pack",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Mark the order packed and ready for rider pickup",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    },
+    "/v1/admin/orders": {
+      "get": {
+        "operationId": "AdminOrdersController_list",
+        "parameters": [
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PLACED",
+                "RX_REVIEW",
+                "ACCEPTED",
+                "PACKED",
+                "RIDER_ASSIGNED",
+                "PICKED_UP",
+                "OUT_FOR_DELIVERY",
+                "DELIVERED",
+                "RX_REJECTED",
+                "CANCELLED",
+                "UNDELIVERED"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "shopId",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Live orders board data",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}": {
+      "get": {
+        "operationId": "AdminOrdersController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Full order detail incl. payments, refunds and audit trail",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/assign-rider": {
+      "post": {
+        "operationId": "AdminOrdersController_assignRider",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignRiderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Assign (or reassign) a rider to a packed order",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/orders/{id}/transition": {
+      "post": {
+        "operationId": "AdminOrdersController_transition",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminTransitionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Ops manual override (phone-confirmed acceptance, forced cancel, etc.). Obeys the state machine; refunds/COD side effects apply automatically.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/rider/tasks": {
+      "get": {
+        "operationId": "RiderOrdersController_tasks",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My active delivery tasks (assigned → out for delivery)",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/orders/{id}/pickup": {
+      "post": {
+        "operationId": "RiderOrdersController_pickup",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Picked the parcel up from the shop",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/orders/{id}/out-for-delivery": {
+      "post": {
+        "operationId": "RiderOrdersController_outForDelivery",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Heading to the customer",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/orders/{id}/deliver": {
+      "post": {
+        "operationId": "RiderOrdersController_deliver",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliverDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Complete delivery — requires the 4-digit code from the customer app (COD: collects cash into your ledger)",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/orders/{id}/undelivered": {
+      "post": {
+        "operationId": "RiderOrdersController_undelivered",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delivery failed (customer unreachable etc.) — prepaid orders auto-refund",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/prescriptions/upload-url": {
+      "post": {
+        "operationId": "PrescriptionsController_uploadUrl",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UploadUrlDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Get a presigned PUT URL to upload a prescription (private bucket). Pass the returned fileKey in order creation.",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/v1/prescriptions/{id}/view-url": {
+      "get": {
+        "operationId": "PrescriptionsController_viewUrl",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Short-lived signed URL to view a prescription image (scoped to the order parties)",
+        "tags": [
+          "prescriptions"
+        ]
+      }
+    },
+    "/v1/admin/prescriptions": {
+      "get": {
+        "operationId": "AdminPrescriptionsController_queue",
+        "parameters": [
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "PENDING",
+                "APPROVED",
+                "REJECTED"
+              ],
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Prescription verification queue",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/prescriptions/{id}/verify": {
+      "post": {
+        "operationId": "AdminPrescriptionsController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Approve or reject a prescription (rejecting also rejects + refunds the order)",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/shop/prescriptions/{id}/verify": {
+      "post": {
+        "operationId": "ShopPrescriptionsController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyRxDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Verify a prescription for my shop’s order (registered pharmacists only)",
+        "tags": [
+          "shop-portal"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "MediLocal API",
+    "description": "Hyperlocal medicine delivery platform API. The OpenAPI spec at /docs-json also feeds the Dart client generator for the Flutter apps.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "DashboardLoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "admin@medilocal.local"
+          },
+          "password": {
+            "type": "string",
+            "example": "ChangeMe123!"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "FirebaseLoginDto": {
+        "type": "object",
+        "properties": {
+          "idToken": {
+            "type": "string",
+            "description": "Firebase ID token obtained after phone OTP verification in the app"
+          }
+        },
+        "required": [
+          "idToken"
+        ]
+      },
+      "DevLoginDto": {
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "customer",
+              "rider"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "example": "9800000010",
+            "description": "Phone number (rider must already exist)"
+          }
+        },
+        "required": [
+          "kind",
+          "phone"
+        ]
+      },
+      "RefreshDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "refreshToken"
+        ]
+      },
+      "UpdateMeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Ravi Kumar"
+          },
+          "email": {
+            "type": "string",
+            "example": "ravi@example.com"
+          }
+        }
+      },
+      "FcmTokenDto": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "FCM device registration token"
+          }
+        },
+        "required": [
+          "token"
+        ]
+      },
+      "CreateAddressDto": {
+        "type": "object",
+        "properties": {
+          "zoneId": {
+            "type": "string",
+            "description": "Delivery zone the address falls in (from GET /v1/zones)"
+          },
+          "label": {
+            "type": "string",
+            "example": "Home",
+            "default": "Home"
+          },
+          "line1": {
+            "type": "string",
+            "example": "H.No 12, Gandhi Nagar"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "landmark": {
+            "type": "string",
+            "example": "Opposite SBI ATM"
+          },
+          "pincode": {
+            "type": "string",
+            "example": "800001"
+          },
+          "lat": {
+            "type": "number",
+            "example": 25.5941,
+            "description": "Map-pin latitude"
+          },
+          "lng": {
+            "type": "number",
+            "example": 85.1376,
+            "description": "Map-pin longitude"
+          }
+        },
+        "required": [
+          "zoneId",
+          "line1",
+          "lat",
+          "lng"
+        ]
+      },
+      "UpdateAddressDto": {
+        "type": "object",
+        "properties": {
+          "zoneId": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "line1": {
+            "type": "string"
+          },
+          "line2": {
+            "type": "string"
+          },
+          "landmark": {
+            "type": "string"
+          },
+          "pincode": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          }
+        }
+      },
+      "UpsertInventoryDto": {
+        "type": "object",
+        "properties": {
+          "medicineId": {
+            "type": "string",
+            "description": "Master-catalog medicine id"
+          },
+          "priceInr": {
+            "type": "number",
+            "example": 33.6,
+            "description": "Selling price in INR — must be ≤ the medicine MRP"
+          },
+          "inStock": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": [
+          "medicineId",
+          "priceInr"
+        ]
+      },
+      "UpdateInventoryDto": {
+        "type": "object",
+        "properties": {
+          "priceInr": {
+            "type": "number",
+            "example": 30,
+            "description": "Selling price in INR — must be ≤ MRP"
+          },
+          "inStock": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateShopDto": {
+        "type": "object",
+        "properties": {
+          "cityId": {
+            "type": "string"
+          },
+          "zoneId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string",
+            "example": "Sri Balaji Medical Store"
+          },
+          "licenseNo": {
+            "type": "string",
+            "description": "Drug license number — verify the paper copy before activating"
+          },
+          "gstin": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9800000001"
+          },
+          "email": {
+            "type": "string"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number",
+            "example": 25.5941
+          },
+          "lng": {
+            "type": "number",
+            "example": 85.1376
+          },
+          "commissionPct": {
+            "type": "number",
+            "example": 10,
+            "description": "Platform commission %"
+          },
+          "openTime": {
+            "type": "string",
+            "example": "09:00"
+          },
+          "closeTime": {
+            "type": "string",
+            "example": "22:00"
+          }
+        },
+        "required": [
+          "cityId",
+          "zoneId",
+          "name",
+          "licenseNo",
+          "phone",
+          "addressLine",
+          "lat",
+          "lng"
+        ]
+      },
+      "UpdateShopDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDING",
+              "ACTIVE",
+              "SUSPENDED"
+            ]
+          },
+          "name": {
+            "type": "string"
+          },
+          "licenseNo": {
+            "type": "string"
+          },
+          "gstin": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "addressLine": {
+            "type": "string"
+          },
+          "lat": {
+            "type": "number"
+          },
+          "lng": {
+            "type": "number"
+          },
+          "commissionPct": {
+            "type": "number"
+          },
+          "openTime": {
+            "type": "string"
+          },
+          "closeTime": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateShopStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9800000002"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8
+          },
+          "isPharmacist": {
+            "type": "boolean",
+            "default": false
+          },
+          "pharmacistRegNo": {
+            "type": "string",
+            "description": "State pharmacy council registration number"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "phone",
+          "password"
+        ]
+      },
+      "CreateRiderDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string",
+            "example": "9800000003"
+          },
+          "vehicleNo": {
+            "type": "string",
+            "example": "BR01AB1234"
+          }
+        },
+        "required": [
+          "name",
+          "phone"
+        ]
+      },
+      "QuoteItemDto": {
+        "type": "object",
+        "properties": {
+          "medicineId": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "medicineId",
+          "qty"
+        ]
+      },
+      "CartQuoteDto": {
+        "type": "object",
+        "properties": {
+          "zoneId": {
+            "type": "string",
+            "description": "Delivery zone (from the chosen address)"
+          },
+          "shopId": {
+            "type": "string",
+            "description": "Pin a specific shop; omit to let the platform pick the best-covering shop in the zone"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/QuoteItemDto"
+            }
+          }
+        },
+        "required": [
+          "zoneId",
+          "items"
+        ]
+      },
+      "CheckoutVerifyDto": {
+        "type": "object",
+        "properties": {
+          "razorpayOrderId": {
+            "type": "string",
+            "example": "order_XXXXXXXXXXXXXX"
+          },
+          "razorpayPaymentId": {
+            "type": "string",
+            "example": "pay_XXXXXXXXXXXXXX"
+          },
+          "razorpaySignature": {
+            "type": "string",
+            "description": "Signature from the Razorpay Checkout success handler"
+          }
+        },
+        "required": [
+          "razorpayOrderId",
+          "razorpayPaymentId",
+          "razorpaySignature"
+        ]
+      },
+      "OrderItemInputDto": {
+        "type": "object",
+        "properties": {
+          "medicineId": {
+            "type": "string"
+          },
+          "qty": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 50
+          }
+        },
+        "required": [
+          "medicineId",
+          "qty"
+        ]
+      },
+      "CreateOrderDto": {
+        "type": "object",
+        "properties": {
+          "addressId": {
+            "type": "string",
+            "description": "One of my saved addresses (its zone decides fees & the serving shop)"
+          },
+          "shopId": {
+            "type": "string",
+            "description": "Pin a shop; omit to let the platform pick (same rule as cart quote)"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "RAZORPAY",
+              "COD"
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemInputDto"
+            }
+          },
+          "rxFileKeys": {
+            "description": "S3 file keys from POST /v1/prescriptions/upload-url — required when any item needs a prescription",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "addressId",
+          "paymentMethod",
+          "items"
+        ]
+      },
+      "CancelDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ItemDecisionDto": {
+        "type": "object",
+        "properties": {
+          "orderItemId": {
+            "type": "string"
+          },
+          "accepted": {
+            "type": "boolean",
+            "description": "false = shop does not have it → item is dropped and auto-refunded"
+          }
+        },
+        "required": [
+          "orderItemId",
+          "accepted"
+        ]
+      },
+      "ShopAcceptDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "description": "A decision for every item on the order",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemDecisionDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "AssignRiderDto": {
+        "type": "object",
+        "properties": {
+          "riderId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "riderId"
+        ]
+      },
+      "AdminTransitionDto": {
+        "type": "object",
+        "properties": {
+          "toState": {
+            "type": "string",
+            "enum": [
+              "PLACED",
+              "RX_REVIEW",
+              "ACCEPTED",
+              "PACKED",
+              "RIDER_ASSIGNED",
+              "PICKED_UP",
+              "OUT_FOR_DELIVERY",
+              "DELIVERED",
+              "RX_REJECTED",
+              "CANCELLED",
+              "UNDELIVERED"
+            ]
+          },
+          "note": {
+            "type": "string",
+            "description": "Why ops is overriding — goes into the order audit trail"
+          }
+        },
+        "required": [
+          "toState",
+          "note"
+        ]
+      },
+      "DeliverDto": {
+        "type": "object",
+        "properties": {
+          "otp": {
+            "type": "string",
+            "minLength": 4,
+            "maxLength": 4,
+            "description": "Handoff code the customer reads out from their app"
+          }
+        },
+        "required": [
+          "otp"
+        ]
+      },
+      "ReasonDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "example": "Customer not reachable at the address"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "UploadUrlDto": {
+        "type": "object",
+        "properties": {
+          "contentType": {
+            "type": "string",
+            "enum": [
+              "image/jpeg",
+              "image/png",
+              "image/webp",
+              "application/pdf"
+            ],
+            "example": "image/jpeg"
+          }
+        },
+        "required": [
+          "contentType"
+        ]
+      },
+      "VerifyRxDto": {
+        "type": "object",
+        "properties": {
+          "approve": {
+            "type": "boolean",
+            "description": "true = approve; false = reject the prescription AND the order"
+          },
+          "rejectionReason": {
+            "type": "string",
+            "description": "Required when rejecting — shown to the customer"
+          }
+        },
+        "required": [
+          "approve"
+        ]
+      }
+    }
+  }
+}

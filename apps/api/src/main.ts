@@ -1,10 +1,12 @@
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { buildSwaggerConfig } from './openapi';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // rawBody: Razorpay webhook signatures are HMACs over the raw request bytes.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
 
   app.setGlobalPrefix('v1', { exclude: ['health'] });
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
@@ -13,15 +15,7 @@ async function bootstrap() {
     credentials: true,
   });
 
-  const swaggerConfig = new DocumentBuilder()
-    .setTitle('MediLocal API')
-    .setDescription(
-      'Hyperlocal medicine delivery platform API. The OpenAPI spec at /docs-json also feeds the Dart client generator for the Flutter apps.',
-    )
-    .setVersion('0.1.0')
-    .addBearerAuth()
-    .build();
-  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, swaggerConfig));
+  SwaggerModule.setup('docs', app, SwaggerModule.createDocument(app, buildSwaggerConfig()));
 
   const port = Number(process.env.PORT ?? 3000);
   await app.listen(port);

@@ -14,6 +14,9 @@ coverage/
 # Prisma generated client output (regenerated on install)
 apps/api/generated/
 
+# Generated Dart API client (pnpm gen:dart-client — regenerated from apps/api/openapi.json)
+mobile/api_client/
+
 # Flutter
 mobile/*/.dart_tool/
 mobile/*/build/

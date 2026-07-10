@@ -240,6 +240,7 @@ model Order {
   paymentState    PaymentState
   paymentMethod   PaymentMethod
   requiresRx      Boolean       @default(false)
+  deliveryOtp     String // 4-digit handoff code: rider must enter it to mark DELIVERED
   addressSnapshot Json // frozen copy of the delivery address at order time
   itemsTotalInr   Decimal       @db.Decimal(10, 2)
   deliveryFeeInr  Decimal       @db.Decimal(10, 2)
@@ -273,6 +274,8 @@ model OrderItem {
 
   order    Order    @relation(fields: [orderId], references: [id])
   medicine Medicine @relation(fields: [medicineId], references: [id])
+
+  @@index([orderId])
 }
 
 model OrderStatusHistory {
@@ -286,6 +289,8 @@ model OrderStatusHistory {
   createdAt DateTime    @default(now())
 
   order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
 }
 
 model Prescription {
@@ -299,6 +304,8 @@ model Prescription {
   createdAt       DateTime  @default(now())
 
   order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
 }
 
 // ── Delivery ─────────────────────────────────────────────────────────────
@@ -353,7 +360,7 @@ model Payment {
   method            PaymentMethod
   amountInr         Decimal       @db.Decimal(10, 2)
   status            String // created | captured | failed | cod_due | cod_collected
-  razorpayOrderId   String?
+  razorpayOrderId   String?       @unique // webhook lookup path
   razorpayPaymentId String?
   razorpaySignature String?
   raw               Json?
@@ -361,6 +368,8 @@ model Payment {
 
   order   Order    @relation(fields: [orderId], references: [id])
   refunds Refund[]
+
+  @@index([orderId])
 }
 
 model Refund {

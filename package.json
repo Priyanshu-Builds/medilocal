@@ -8,9 +8,12 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "db:migrate": "pnpm --filter @medilocal/api db:migrate",
-    "db:seed": "pnpm --filter @medilocal/api db:seed"
+    "db:seed": "pnpm --filter @medilocal/api db:seed",
+    "openapi:export": "pnpm --filter @medilocal/api openapi:export",
+    "gen:dart-client": "openapi-generator-cli generate -i apps/api/openapi.json -g dart -o mobile/api_client --additional-properties=pubName=medilocal_api"
   },
   "devDependencies": {
+    "@openapitools/openapi-generator-cli": "^2.39.1",
     "turbo": "^2.5.4"
   }
 }
