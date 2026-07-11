@@ -106,6 +106,33 @@ export class ShopsService {
     });
   }
 
+  async adminGetOne(id: string) {
+    const shop = await this.prisma.shop.findUnique({
+      where: { id },
+      include: {
+        zone: { select: { id: true, name: true } },
+        staff: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            isPharmacist: true,
+            pharmacistRegNo: true,
+            isActive: true,
+          },
+          orderBy: { createdAt: 'asc' },
+        },
+        inventory: {
+          include: { medicine: true },
+          orderBy: { medicine: { name: 'asc' } },
+        },
+      },
+    });
+    if (!shop) throw new NotFoundException('Shop not found');
+    return shop;
+  }
+
   async adminCreate(dto: CreateShopDto) {
     const zone = await this.prisma.zone.findUnique({ where: { id: dto.zoneId } });
     if (!zone || zone.cityId !== dto.cityId) {

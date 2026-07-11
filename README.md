@@ -66,6 +66,25 @@ Set `DEV_LOGIN_ENABLED=true` in `apps/api/.env` (never in production), then from
 
 Razorpay online payment: put test keys + webhook secret in `.env`, point a [Razorpay webhook](https://dashboard.razorpay.com) (`payment.captured`) at `POST /v1/payments/razorpay/webhook`; orders stay hidden from the shop until the webhook (or the checkout `verify` endpoint) marks them PAID.
 
+## Dashboards (M2)
+
+Both dashboards are Next.js apps that talk to the API above — start everything with `pnpm dev`, or run one with e.g. `pnpm --filter @medilocal/admin dev`.
+
+**Admin console** (http://localhost:3001, `admin@medilocal.local` / `ChangeMe123!`):
+
+- **Orders** — live board (auto-refreshes every 5s), filter by state; order detail with **manual override of everything**: assign/reassign a rider, force any legal state transition (refunds and the COD ledger apply automatically), see payments, refunds and the full audit trail.
+- **Rx queue** — pharmacist approve/reject with a short-lived signed image link; rejecting also cancels + refunds the order.
+- **Catalog** — search, create/edit medicines, activate/deactivate, and **CSV bulk import** (paste or upload; upserts by name, rejects Schedule X, reports bad rows without aborting the batch).
+- **Shops** — onboard a shop (created PENDING until you verify the license), activate/suspend, add staff logins, edit inventory on the shop's behalf.
+- **Riders** — register riders and watch each one's COD cash-in-hand.
+
+**Pharmacy portal** (http://localhost:3002, `pharmacy@medilocal.local` / `ChangeMe123!`):
+
+- **Orders** — Swiggy-partner-style live board with a **new-order sound alert** (click "Enable sound" once — browsers require a gesture before audio). Accept **item by item** (drop what's out of stock; the difference auto-refunds), mark packed, and verify prescriptions inline (registered pharmacists only).
+- **Stock & prices** — add catalog medicines to your shelf, toggle in/out of stock, set your price up to MRP.
+
+To populate the boards without the mobile apps, place a couple of orders with the M1 dev-login flow above.
+
 ## Dart API client (Flutter apps)
 
 `apps/api/openapi.json` is the committed contract (CI fails if it drifts from the code — regenerate with `pnpm openapi:export`). Generate the Dart client with `pnpm gen:dart-client` (needs Java, or use the `openapitools/openapi-generator-cli` Docker image) → `mobile/api_client/`, wired into the Flutter apps in M3/M4.
@@ -87,7 +106,7 @@ Razorpay online payment: put test keys + webhook secret in `.env`, point a [Razo
 
 - [x] **M0** — Monorepo scaffold: API + schema + seed + Swagger, dashboard shells with login, Flutter app sources, CI
 - [x] **M1** — Backend core: catalog, cart/pricing, order state machine, Rx upload (S3), Razorpay + webhook + COD, FCM
-- [ ] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
+- [x] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
 - [ ] **M3** — Customer app: search → cart → checkout → track
 - [ ] **M4** — Rider app: shifts, tasks, background GPS, COD collection
 - [ ] **M5** — Launch hardening + pilot with 2–3 shops

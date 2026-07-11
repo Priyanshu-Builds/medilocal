@@ -7,7 +7,7 @@ import { session } from '@/lib/api';
 export default function Home() {
   const router = useRouter();
   useEffect(() => {
-    router.replace(session.token() ? '/dashboard' : '/login');
+    router.replace(session.token() ? '/orders' : '/login');
   }, [router]);
   return null;
 }

@@ -76,6 +76,13 @@ export class AdminShopsController {
     return this.shops.adminList();
   }
 
+  @Get('shops/:id')
+  @Auth('admin')
+  @ApiOperation({ summary: 'Shop detail with staff and inventory' })
+  getShop(@Param('id') id: string) {
+    return this.shops.adminGetOne(id);
+  }
+
   @Post('shops')
   @Auth('admin')
   @AdminRoles('OPS')

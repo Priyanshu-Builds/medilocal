@@ -30,7 +30,7 @@ export default function LoginPage() {
     try {
       const res = await apiPost<LoginResponse>('/v1/auth/shop/login', { email, password });
       session.save(res.accessToken, res.user);
-      router.replace('/dashboard');
+      router.replace('/orders');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed');
     } finally {

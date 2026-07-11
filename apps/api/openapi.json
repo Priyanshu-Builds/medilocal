@@ -440,6 +440,132 @@
         ]
       }
     },
+    "/v1/admin/medicines": {
+      "get": {
+        "operationId": "AdminCatalogController_list",
+        "parameters": [
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Master catalog list (includes inactive)",
+        "tags": [
+          "admin"
+        ]
+      },
+      "post": {
+        "operationId": "AdminCatalogController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMedicineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Add a medicine to the master catalog",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/medicines/{id}": {
+      "patch": {
+        "operationId": "AdminCatalogController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMedicineDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Edit a medicine / activate / deactivate",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
+    "/v1/admin/medicines/import": {
+      "post": {
+        "operationId": "AdminCatalogController_import",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportCsvDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Bulk import/upsert medicines from CSV (matched by name). Bad rows are reported, not fatal.",
+        "tags": [
+          "admin"
+        ]
+      }
+    },
     "/v1/shops": {
       "get": {
         "operationId": "ShopsController_list",
@@ -634,6 +760,33 @@
       }
     },
     "/v1/admin/shops/{id}": {
+      "get": {
+        "operationId": "AdminShopsController_getShop",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Shop detail with staff and inventory",
+        "tags": [
+          "admin"
+        ]
+      },
       "patch": {
         "operationId": "AdminShopsController_updateShop",
         "parameters": [
@@ -1774,6 +1927,107 @@
             "type": "number"
           }
         }
+      },
+      "CreateMedicineDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Dolo 650"
+          },
+          "brand": {
+            "type": "string",
+            "example": "Dolo"
+          },
+          "genericName": {
+            "type": "string",
+            "example": "Paracetamol 650mg"
+          },
+          "manufacturer": {
+            "type": "string",
+            "example": "Micro Labs"
+          },
+          "mrpInr": {
+            "type": "number",
+            "example": 33.6
+          },
+          "packSize": {
+            "type": "string",
+            "example": "Strip of 15 tablets"
+          },
+          "schedule": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "H",
+              "H1"
+            ],
+            "default": "NONE"
+          },
+          "rxRequired": {
+            "type": "boolean",
+            "description": "Auto-forced true for H/H1"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "mrpInr"
+        ]
+      },
+      "UpdateMedicineDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "brand": {
+            "type": "string"
+          },
+          "genericName": {
+            "type": "string"
+          },
+          "manufacturer": {
+            "type": "string"
+          },
+          "mrpInr": {
+            "type": "number"
+          },
+          "packSize": {
+            "type": "string"
+          },
+          "schedule": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "H",
+              "H1"
+            ]
+          },
+          "rxRequired": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "imageUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportCsvDto": {
+        "type": "object",
+        "properties": {
+          "csv": {
+            "type": "string",
+            "description": "Raw CSV text. Header: name,brand,genericName,manufacturer,mrpInr,packSize,schedule,rxRequired. Upserts by name (case-insensitive)."
+          }
+        },
+        "required": [
+          "csv"
+        ]
       },
       "UpsertInventoryDto": {
         "type": "object",
