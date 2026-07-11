@@ -171,6 +171,9 @@ export class OrderActionsService {
     const order = await this.loadOrder(orderId);
     const rider = await this.prisma.rider.findUnique({ where: { id: riderId } });
     if (!rider || !rider.isActive) throw new BadRequestException('Rider not found or inactive');
+    if (!rider.isOnDuty) {
+      throw new BadRequestException(`${rider.name} is off duty — they must go on duty before a task can be assigned`);
+    }
     const actor: Actor = { type: 'ADMIN', id: adminId };
 
     if (order.state === 'RIDER_ASSIGNED') {
@@ -259,6 +262,47 @@ export class OrderActionsService {
       throw new ForbiddenException('This order is not assigned to you');
     }
     return order;
+  }
+
+  /**
+   * Rider accepts an offered task. The atomic guard on status='OFFERED' makes
+   * this first-accept-wins if the same order was ever broadcast to several
+   * riders — a losing accept gets a clean 409 instead of stealing the task.
+   * The order stays RIDER_ASSIGNED; only the assignment is stamped ACCEPTED.
+   */
+  async riderAccept(riderId: string, orderId: string) {
+    const order = await this.loadRiderOrder(riderId, orderId);
+    // Off-duty riders can finish tasks they've already taken, but can't pick up new ones.
+    const rider = await this.prisma.rider.findUnique({
+      where: { id: riderId },
+      select: { isOnDuty: true },
+    });
+    if (!rider?.isOnDuty) {
+      throw new ForbiddenException('You are off duty — go on duty to accept new tasks');
+    }
+    if (order.state !== 'RIDER_ASSIGNED') {
+      throw new ConflictException('This task can no longer be accepted');
+    }
+    const result = await this.prisma.deliveryAssignment.updateMany({
+      where: { orderId, riderId, status: 'OFFERED' },
+      data: { status: 'ACCEPTED', acceptedAt: new Date() },
+    });
+    if (result.count === 0) {
+      // Already accepted (idempotent no-op) or taken by someone else.
+      if (order.assignment?.status === 'ACCEPTED') return this.loadOrder(orderId);
+      throw new ConflictException('Task already taken');
+    }
+    await this.prisma.orderStatusHistory.create({
+      data: {
+        orderId,
+        fromState: 'RIDER_ASSIGNED',
+        toState: 'RIDER_ASSIGNED',
+        actorType: 'RIDER',
+        actorId: riderId,
+        note: 'Rider accepted the task',
+      },
+    });
+    return this.loadOrder(orderId);
   }
 
   async riderPickup(riderId: string, orderId: string) {

@@ -311,14 +311,19 @@ model Prescription {
 // ── Delivery ─────────────────────────────────────────────────────────────
 
 model Rider {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
-  phone         String   @unique
+  phone         String    @unique
   vehicleNo     String?
-  isActive      Boolean  @default(true)
-  cashInHandInr Decimal  @default(0) @db.Decimal(10, 2) // COD ledger, reconciled daily
+  isActive      Boolean   @default(true)
+  isOnDuty      Boolean   @default(false) // duty shift toggle; only on-duty riders should receive task offers
+  cashInHandInr Decimal   @default(0) @db.Decimal(10, 2) // COD ledger, reconciled daily
   fcmToken      String?
-  createdAt     DateTime @default(now())
+  // Last known position (live location; sampled history goes to RiderLocation, Redis at scale).
+  lastLat       Float?
+  lastLng       Float?
+  lastSeenAt    DateTime?
+  createdAt     DateTime  @default(now())
 
   assignments DeliveryAssignment[]
   locations   RiderLocation[]

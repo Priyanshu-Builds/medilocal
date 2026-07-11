@@ -1423,6 +1423,86 @@
         ]
       }
     },
+    "/v1/rider/me": {
+      "get": {
+        "operationId": "RiderOrdersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "My rider profile: duty status, COD cash-in-hand and active task count",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/duty": {
+      "post": {
+        "operationId": "RiderOrdersController_duty",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DutyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Go on/off duty. Only on-duty riders are offered new tasks.",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/location": {
+      "post": {
+        "operationId": "RiderOrdersController_location",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RiderLocationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Push my live GPS fix (foreground service pings this while on duty)",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
     "/v1/rider/tasks": {
       "get": {
         "operationId": "RiderOrdersController_tasks",
@@ -1438,6 +1518,35 @@
           }
         ],
         "summary": "My active delivery tasks (assigned → out for delivery)",
+        "tags": [
+          "rider"
+        ]
+      }
+    },
+    "/v1/rider/orders/{id}/accept": {
+      "post": {
+        "operationId": "RiderOrdersController_accept",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Accept an offered task (first-accept-wins)",
         "tags": [
           "rider"
         ]
@@ -2420,6 +2529,37 @@
         "required": [
           "toState",
           "note"
+        ]
+      },
+      "DutyDto": {
+        "type": "object",
+        "properties": {
+          "onDuty": {
+            "type": "boolean",
+            "description": "true = go on duty (receive task offers), false = go off duty"
+          }
+        },
+        "required": [
+          "onDuty"
+        ]
+      },
+      "RiderLocationDto": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number",
+            "example": 25.6,
+            "description": "Current latitude"
+          },
+          "lng": {
+            "type": "number",
+            "example": 85.1,
+            "description": "Current longitude"
+          }
+        },
+        "required": [
+          "lat",
+          "lng"
         ]
       },
       "DeliverDto": {

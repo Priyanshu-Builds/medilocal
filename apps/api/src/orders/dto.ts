@@ -7,6 +7,8 @@ import {
   IsBoolean,
   IsIn,
   IsInt,
+  IsLatitude,
+  IsLongitude,
   IsOptional,
   IsString,
   Length,
@@ -114,6 +116,22 @@ export class CancelDto {
   @IsString()
   @MaxLength(300)
   reason?: string;
+}
+
+export class DutyDto {
+  @ApiProperty({ description: 'true = go on duty (receive task offers), false = go off duty' })
+  @IsBoolean()
+  onDuty: boolean;
+}
+
+export class RiderLocationDto {
+  @ApiProperty({ example: 25.6, description: 'Current latitude' })
+  @IsLatitude()
+  lat: number;
+
+  @ApiProperty({ example: 85.1, description: 'Current longitude' })
+  @IsLongitude()
+  lng: number;
 }
 
 export class AdminTransitionDto {

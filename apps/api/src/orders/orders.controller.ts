@@ -11,9 +11,12 @@ import {
   CancelDto,
   CreateOrderDto,
   DeliverDto,
+  DutyDto,
   ReasonDto,
+  RiderLocationDto,
   ShopAcceptDto,
 } from './dto';
+import { RiderService } from './rider.service';
 import type { JwtPayload } from '../common/jwt-payload';
 
 @ApiTags('orders')
@@ -147,13 +150,42 @@ export class RiderOrdersController {
   constructor(
     private readonly orders: OrdersService,
     private readonly actions: OrderActionsService,
+    private readonly rider: RiderService,
   ) {}
+
+  @Get('me')
+  @Auth('rider')
+  @ApiOperation({ summary: 'My rider profile: duty status, COD cash-in-hand and active task count' })
+  me(@CurrentUser() user: JwtPayload) {
+    return this.rider.me(user.sub);
+  }
+
+  @Post('duty')
+  @Auth('rider')
+  @ApiOperation({ summary: 'Go on/off duty. Only on-duty riders are offered new tasks.' })
+  duty(@CurrentUser() user: JwtPayload, @Body() dto: DutyDto) {
+    return this.rider.setDuty(user.sub, dto.onDuty);
+  }
+
+  @Post('location')
+  @Auth('rider')
+  @ApiOperation({ summary: 'Push my live GPS fix (foreground service pings this while on duty)' })
+  location(@CurrentUser() user: JwtPayload, @Body() dto: RiderLocationDto) {
+    return this.rider.recordLocation(user.sub, dto.lat, dto.lng);
+  }
 
   @Get('tasks')
   @Auth('rider')
   @ApiOperation({ summary: 'My active delivery tasks (assigned → out for delivery)' })
   tasks(@CurrentUser() user: JwtPayload) {
     return this.orders.listRiderTasks(user.sub);
+  }
+
+  @Post('orders/:id/accept')
+  @Auth('rider')
+  @ApiOperation({ summary: 'Accept an offered task (first-accept-wins)' })
+  accept(@CurrentUser() user: JwtPayload, @Param('id') id: string) {
+    return this.actions.riderAccept(user.sub, id);
   }
 
   @Post('orders/:id/pickup')

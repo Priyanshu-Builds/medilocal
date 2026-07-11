@@ -10,11 +10,12 @@ import {
   ShopOrdersController,
 } from './orders.controller';
 import { OrdersService } from './orders.service';
+import { RiderService } from './rider.service';
 
 @Module({
   imports: [CartModule, PaymentsModule, NotificationsModule],
   controllers: [OrdersController, ShopOrdersController, AdminOrdersController, RiderOrdersController],
-  providers: [OrdersService, OrderActionsService],
+  providers: [OrdersService, OrderActionsService, RiderService],
   exports: [OrdersService, OrderActionsService],
 })
 export class OrdersModule {}
