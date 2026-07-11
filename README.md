@@ -108,5 +108,5 @@ To populate the boards without the mobile apps, place a couple of orders with th
 - [x] **M1** — Backend core: catalog, cart/pricing, order state machine, Rx upload (S3), Razorpay + webhook + COD, FCM
 - [x] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
 - [x] **M3** — Customer app: search → cart → COD checkout → live tracking (Firebase OTP, Razorpay, Rx upload, map pin deferred until keys/device — see [mobile/customer/README.md](mobile/customer/README.md))
-- [ ] **M4** — Rider app: shifts, tasks, background GPS, COD collection
+- [x] **M4** — Rider app: duty shifts, task accept, pickup→delivery status flow, delivery-OTP handoff, COD cash ledger, live-location streaming (background GPS via `geolocator`/foreground-service, Firebase OTP, maps, Socket.IO deferred until keys/device — see [mobile/rider/README.md](mobile/rider/README.md))
 - [ ] **M5** — Launch hardening + pilot with 2–3 shops

@@ -1,8 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'api/client.dart';
+import 'state/location_controller.dart';
+import 'state/session.dart';
+import 'screens/earnings_screen.dart';
+import 'screens/login_screen.dart';
+import 'screens/profile_screen.dart';
+import 'screens/tasks_screen.dart';
 
-void main() {
-  runApp(const MediLocalRiderApp());
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final api = ApiClient();
+  final session = SessionController(api);
+  await session.load();
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<ApiClient>.value(value: api),
+        ChangeNotifierProvider<SessionController>.value(value: session),
+        ChangeNotifierProvider<LocationController>(create: (_) => LocationController(api)),
+      ],
+      child: const MediLocalRiderApp(),
+    ),
+  );
 }
+
+const brandOrange = Color(0xFFEA580C);
+const brandOrangeDark = Color(0xFFC2410C);
 
 class MediLocalRiderApp extends StatelessWidget {
   const MediLocalRiderApp({super.key});
@@ -13,133 +38,109 @@ class MediLocalRiderApp extends StatelessWidget {
       title: 'MediLocal Rider',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEA580C)),
+        colorScheme: ColorScheme.fromSeed(seedColor: brandOrange),
         useMaterial3: true,
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
-      home: const RiderShell(),
+      home: const _AuthGate(),
     );
   }
 }
 
-class RiderShell extends StatefulWidget {
-  const RiderShell({super.key});
-
-  @override
-  State<RiderShell> createState() => _RiderShellState();
-}
-
-class _RiderShellState extends State<RiderShell> {
-  int _index = 0;
-  bool _onDuty = false;
+class _AuthGate extends StatelessWidget {
+  const _AuthGate();
 
   @override
   Widget build(BuildContext context) {
+    final session = context.watch<SessionController>();
+    if (!session.isReady) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    if (!session.isLoggedIn) return const LoginScreen();
+    return const HomeShell();
+  }
+}
+
+class HomeShell extends StatefulWidget {
+  const HomeShell({super.key});
+
+  @override
+  State<HomeShell> createState() => _HomeShellState();
+}
+
+class _HomeShellState extends State<HomeShell> {
+  int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // If a shift was already on when the app restarted, resume GPS streaming.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final session = context.read<SessionController>();
+      if (session.onDuty) context.read<LocationController>().start();
+    });
+  }
+
+  Future<void> _toggleDuty(bool value) async {
+    final session = context.read<SessionController>();
+    final location = context.read<LocationController>();
+    try {
+      await session.setDuty(value);
+      if (value) {
+        location.start();
+      } else {
+        location.stop();
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not update duty: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final session = context.watch<SessionController>();
+    const titles = ['Tasks', 'Cash', 'Profile'];
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('MediLocal Rider'),
+        title: Text(titles[_index]),
         actions: [
           Row(
             children: [
-              Text(_onDuty ? 'On duty' : 'Off duty', style: const TextStyle(fontSize: 13)),
-              Switch(
-                value: _onDuty,
-                onChanged: (v) => setState(() => _onDuty = v),
-              ),
+              Text(session.onDuty ? 'On duty' : 'Off duty', style: const TextStyle(fontSize: 13)),
+              Switch(value: session.onDuty, onChanged: _toggleDuty),
               const SizedBox(width: 8),
             ],
           ),
         ],
       ),
-      body: switch (_index) {
-        0 => TasksTab(onDuty: _onDuty),
-        1 => const EarningsTab(),
-        _ => const ProfileTab(),
-      },
+      body: IndexedStack(
+        index: _index,
+        children: const [TasksScreen(), EarningsScreen(), ProfileScreen()],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.delivery_dining_outlined), selectedIcon: Icon(Icons.delivery_dining), label: 'Tasks'),
-          NavigationDestination(icon: Icon(Icons.currency_rupee_outlined), selectedIcon: Icon(Icons.currency_rupee), label: 'Cash'),
-          NavigationDestination(icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class TasksTab extends StatelessWidget {
-  const TasksTab({super.key, required this.onDuty});
-
-  final bool onDuty;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            onDuty ? Icons.hourglass_top : Icons.power_settings_new,
-            size: 56,
-            color: Colors.grey,
-          ),
-          const SizedBox(height: 12),
-          Text(onDuty ? 'Waiting for delivery tasks…' : 'Go on duty to receive tasks'),
-          const Text(
-            'Task offers, pickup/drop navigation and status updates arrive in M4',
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class EarningsTab extends StatelessWidget {
-  const EarningsTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('COD cash in hand', style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
-                Text('₹0.00', style: Theme.of(context).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                const Text(
-                  'Cash collected on delivery shows here and is reconciled daily with ops (M4)',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class ProfileTab extends StatelessWidget {
-  const ProfileTab({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.person_outline, size: 56, color: Colors.grey),
-          SizedBox(height: 12),
-          Text('Rider login arrives in M4'),
+          NavigationDestination(
+              icon: Icon(Icons.delivery_dining_outlined),
+              selectedIcon: Icon(Icons.delivery_dining),
+              label: 'Tasks'),
+          NavigationDestination(
+              icon: Icon(Icons.currency_rupee_outlined),
+              selectedIcon: Icon(Icons.currency_rupee),
+              label: 'Cash'),
+          NavigationDestination(
+              icon: Icon(Icons.person_outline), selectedIcon: Icon(Icons.person), label: 'Profile'),
         ],
       ),
     );

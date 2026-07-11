@@ -261,6 +261,39 @@ export class OrderActionsService {
     return order;
   }
 
+  /**
+   * Rider accepts an offered task. The atomic guard on status='OFFERED' makes
+   * this first-accept-wins if the same order was ever broadcast to several
+   * riders — a losing accept gets a clean 409 instead of stealing the task.
+   * The order stays RIDER_ASSIGNED; only the assignment is stamped ACCEPTED.
+   */
+  async riderAccept(riderId: string, orderId: string) {
+    const order = await this.loadRiderOrder(riderId, orderId);
+    if (order.state !== 'RIDER_ASSIGNED') {
+      throw new ConflictException('This task can no longer be accepted');
+    }
+    const result = await this.prisma.deliveryAssignment.updateMany({
+      where: { orderId, riderId, status: 'OFFERED' },
+      data: { status: 'ACCEPTED', acceptedAt: new Date() },
+    });
+    if (result.count === 0) {
+      // Already accepted (idempotent no-op) or taken by someone else.
+      if (order.assignment?.status === 'ACCEPTED') return this.loadOrder(orderId);
+      throw new ConflictException('Task already taken');
+    }
+    await this.prisma.orderStatusHistory.create({
+      data: {
+        orderId,
+        fromState: 'RIDER_ASSIGNED',
+        toState: 'RIDER_ASSIGNED',
+        actorType: 'RIDER',
+        actorId: riderId,
+        note: 'Rider accepted the task',
+      },
+    });
+    return this.loadOrder(orderId);
+  }
+
   async riderPickup(riderId: string, orderId: string) {
     const order = await this.loadRiderOrder(riderId, orderId);
     await this.prisma.$transaction(async (tx) => {

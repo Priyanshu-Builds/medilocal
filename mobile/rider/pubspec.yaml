@@ -10,9 +10,15 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  # M4 additions (kept out of M0 so the app runs with zero external setup):
-  # firebase_core, firebase_auth, firebase_messaging, geolocator,
-  # flutter_foreground_task (background GPS), google_maps_flutter, socket_io_client
+  http: ^1.2.0            # REST client for the MediLocal API
+  provider: ^6.1.2        # session + duty state
+  shared_preferences: ^2.3.0  # persist the JWT
+  intl: ^0.19.0           # ₹ / date formatting
+
+  # Deferred to when keys + a real device are available (see README):
+  # firebase_core, firebase_auth (phone OTP), firebase_messaging (task-offer push),
+  # geolocator + flutter_foreground_task (background GPS streaming),
+  # google_maps_flutter (pickup/drop navigation), socket_io_client (push live GPS)
 
 dev_dependencies:
   flutter_test:
