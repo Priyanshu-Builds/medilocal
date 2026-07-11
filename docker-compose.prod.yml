@@ -1,0 +1,74 @@
+# Single-box production stack for the pilot (API + Postgres + Redis + Nginx).
+# One EC2/Lightsail host runs everything; scale path is ECS Fargate + RDS later.
+#
+#   cp apps/api/.env.example apps/api/.env.production   # fill in real secrets
+#   cp .env.prod.example .env                           # Postgres creds + domain
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# The API applies pending migrations on boot. Seed once with:
+#   docker compose -f docker-compose.prod.yml exec api node_modules/.bin/prisma db seed
+
+services:
+  postgres:
+    image: postgis/postgis:16-3.4
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    image: medilocal-api
+    restart: unless-stopped
+    env_file:
+      - apps/api/.env.production # JWT/Razorpay/Firebase/S3/Sentry/CORS secrets
+    environment:
+      # These win over env_file — wire the app to the in-network services.
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      REDIS_URL: redis://redis:6379
+      PORT: "3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    expose:
+      - "3000" # internal only — Nginx is the public edge
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/medilocal.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/certs:/etc/nginx/certs:ro # drop fullchain.pem + privkey.pem here for TLS
+    depends_on:
+      - api
+
+volumes:
+  pgdata:
+  redisdata:
