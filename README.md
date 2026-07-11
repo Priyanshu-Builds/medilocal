@@ -107,6 +107,6 @@ To populate the boards without the mobile apps, place a couple of orders with th
 - [x] **M0** — Monorepo scaffold: API + schema + seed + Swagger, dashboard shells with login, Flutter app sources, CI
 - [x] **M1** — Backend core: catalog, cart/pricing, order state machine, Rx upload (S3), Razorpay + webhook + COD, FCM
 - [x] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
-- [ ] **M3** — Customer app: search → cart → checkout → track
+- [x] **M3** — Customer app: search → cart → COD checkout → live tracking (Firebase OTP, Razorpay, Rx upload, map pin deferred until keys/device — see [mobile/customer/README.md](mobile/customer/README.md))
 - [ ] **M4** — Rider app: shifts, tasks, background GPS, COD collection
 - [ ] **M5** — Launch hardening + pilot with 2–3 shops
