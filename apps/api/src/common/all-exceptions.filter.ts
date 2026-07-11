@@ -6,6 +6,7 @@ import {
   HttpStatus,
   Logger,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import type { Request, Response } from 'express';
 
 /**
@@ -35,10 +36,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
       body = { statusCode: status, message: 'Internal server error', error: 'Internal Server Error' };
     }
 
-    // Log server errors with the stack; client (4xx) errors stay quiet.
+    // Log + report server errors with the stack; client (4xx) errors stay quiet.
     if (status >= HttpStatus.INTERNAL_SERVER_ERROR) {
       const err = exception instanceof Error ? exception : new Error(String(exception));
       this.logger.error(`${req.method} ${req.originalUrl} → ${status}: ${err.message}`, err.stack);
+      Sentry.captureException(err); // no-op unless SENTRY_DSN is set
     }
 
     res.status(status).json({
