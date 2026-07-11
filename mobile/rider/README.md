@@ -31,8 +31,10 @@ flutter run --dart-define=API_BASE_URL=http://192.168.1.5:3000
 
 ## What M4 ships (built)
 
-- **Duty shifts** — on/off toggle in the app bar; only on-duty riders are meant to
-  receive task offers. Server-authoritative (`POST /v1/rider/duty`), restored on relaunch.
+- **Duty shifts** — on/off toggle in the app bar. Off-duty riders can't be assigned
+  or accept new tasks (enforced server-side), but can still finish a delivery already
+  in hand — the app shows "Go on duty to accept" on new offers. Server-authoritative
+  (`POST /v1/rider/duty`), restored on relaunch.
 - **Tasks** — active delivery list from `GET /v1/rider/tasks` with pickup (pharmacy) and
   drop (customer) cards, items, and a COD/prepaid banner. The delivery OTP is never sent
   to the rider.

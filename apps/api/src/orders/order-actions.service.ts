@@ -171,6 +171,9 @@ export class OrderActionsService {
     const order = await this.loadOrder(orderId);
     const rider = await this.prisma.rider.findUnique({ where: { id: riderId } });
     if (!rider || !rider.isActive) throw new BadRequestException('Rider not found or inactive');
+    if (!rider.isOnDuty) {
+      throw new BadRequestException(`${rider.name} is off duty — they must go on duty before a task can be assigned`);
+    }
     const actor: Actor = { type: 'ADMIN', id: adminId };
 
     if (order.state === 'RIDER_ASSIGNED') {
@@ -269,6 +272,14 @@ export class OrderActionsService {
    */
   async riderAccept(riderId: string, orderId: string) {
     const order = await this.loadRiderOrder(riderId, orderId);
+    // Off-duty riders can finish tasks they've already taken, but can't pick up new ones.
+    const rider = await this.prisma.rider.findUnique({
+      where: { id: riderId },
+      select: { isOnDuty: true },
+    });
+    if (!rider?.isOnDuty) {
+      throw new ForbiddenException('You are off duty — go on duty to accept new tasks');
+    }
     if (order.state !== 'RIDER_ASSIGNED') {
       throw new ConflictException('This task can no longer be accepted');
     }

@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../api/client.dart';
 import '../api/models.dart';
 import '../format.dart';
+import '../state/location_controller.dart';
 import '../state/session.dart';
 import 'tasks_screen.dart' show StateChip;
 
@@ -50,6 +51,26 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  /// Go on duty from the task screen (the duty toggle lives in the home app bar,
+  /// which isn't shown here). Starts the location stream, same as the toggle.
+  Future<void> _goOnDuty() async {
+    final session = context.read<SessionController>();
+    final location = context.read<LocationController>();
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await session.setDuty(true);
+      location.start();
+      await _load();
+    } catch (e) {
+      if (mounted) setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -109,6 +130,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   Widget _detail(RiderTask task) {
     final ui = taskStateUi(task.state);
+    final onDuty = context.watch<SessionController>().onDuty;
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -159,14 +181,16 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
           Text(_error!, style: const TextStyle(color: Colors.red)),
         ],
         const SizedBox(height: 16),
-        ..._actions(task),
+        ..._actions(task, onDuty),
       ],
     );
   }
 
-  List<Widget> _actions(RiderTask task) {
+  List<Widget> _actions(RiderTask task, bool onDuty) {
     // Not yet accepted → the only action is to claim it (first-accept-wins).
+    // But off-duty riders can't take on new tasks — offer to go on duty instead.
     if (!task.isAccepted) {
+      if (!onDuty) return [_offDutyPrompt()];
       return [
         _primary('Accept task', Icons.check, () => _run(
               () => context.read<ApiClient>().acceptTask(task.orderId),
@@ -204,6 +228,31 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     ));
     return widgets;
   }
+
+  /// Shown for an unaccepted task while off duty: you must go on duty first.
+  Widget _offDutyPrompt() => Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.power_settings_new, color: Colors.grey),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Text("You're off duty. Go on duty to accept this task.",
+                      style: TextStyle(color: Colors.black87)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          _primary('Go on duty', Icons.power_settings_new, _goOnDuty),
+        ],
+      );
 
   Widget _primary(String label, IconData icon, VoidCallback onTap) => FilledButton.icon(
         onPressed: _busy ? null : onTap,

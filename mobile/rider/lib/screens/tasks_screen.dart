@@ -52,7 +52,8 @@ class _TasksScreenState extends State<TasksScreen> {
           return ListView.builder(
             padding: const EdgeInsets.all(12),
             itemCount: tasks.length,
-            itemBuilder: (context, i) => _TaskCard(task: tasks[i], onChanged: _reload),
+            itemBuilder: (context, i) =>
+                _TaskCard(task: tasks[i], onDuty: session.onDuty, onChanged: _reload),
           );
         },
       ),
@@ -86,12 +87,15 @@ class _EmptyState extends StatelessWidget {
 
 class _TaskCard extends StatelessWidget {
   final RiderTask task;
+  final bool onDuty;
   final Future<void> Function() onChanged;
-  const _TaskCard({required this.task, required this.onChanged});
+  const _TaskCard({required this.task, required this.onDuty, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
     final ui = taskStateUi(task.state);
+    // A new offer you can't take until you're on duty.
+    final needsDuty = !task.isAccepted && !onDuty;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -130,6 +134,17 @@ class _TaskCard extends StatelessWidget {
                     const StateChip(label: 'Prepaid', color: Colors.blueGrey),
                 ],
               ),
+              if (needsDuty) ...[
+                const SizedBox(height: 8),
+                Row(
+                  children: const [
+                    Icon(Icons.power_settings_new, size: 14, color: Colors.grey),
+                    SizedBox(width: 4),
+                    Text('Go on duty to accept',
+                        style: TextStyle(fontSize: 12, color: Colors.grey, fontStyle: FontStyle.italic)),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
