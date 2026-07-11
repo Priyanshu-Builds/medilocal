@@ -60,7 +60,7 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
         ],
       ),
     );
-    if (confirm != true) return;
+    if (confirm != true || !mounted) return;
     try {
       await context.read<ApiClient>().cancelOrder(widget.orderId, reason: 'Cancelled from app');
       await _fetch();

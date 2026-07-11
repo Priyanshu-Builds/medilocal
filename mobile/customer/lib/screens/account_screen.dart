@@ -127,7 +127,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ],
       ),
     );
-    if (saved == null || saved.isEmpty) return;
+    if (saved == null || saved.isEmpty || !mounted) return;
     try {
       await context.read<ApiClient>().updateMe(name: saved);
       if (!mounted) return;

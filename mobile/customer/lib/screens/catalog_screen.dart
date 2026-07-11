@@ -45,7 +45,8 @@ class _CatalogScreenState extends State<CatalogScreen> {
     if (!session.hasZone) {
       await Navigator.push(context, MaterialPageRoute(builder: (_) => const ZonePickerScreen()));
     }
-    if (mounted && context.read<SessionController>().hasZone) _reload();
+    if (!mounted) return;
+    if (context.read<SessionController>().hasZone) _reload();
   }
 
   void _reload() {
