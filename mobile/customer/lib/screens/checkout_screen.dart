@@ -102,14 +102,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               _sectionTitle('Delivery address'),
               if (profile.addresses.isEmpty)
                 const Padding(padding: EdgeInsets.symmetric(vertical: 8), child: Text('No saved addresses yet.')),
-              for (final a in profile.addresses)
-                RadioListTile<String>(
-                  value: a.id,
+              if (profile.addresses.isNotEmpty)
+                RadioGroup<String>(
                   groupValue: _selectedAddressId,
                   onChanged: (v) => setState(() => _selectedAddressId = v),
-                  title: Text('${a.label} · ${a.line1}'),
-                  subtitle: Text(a.summary),
-                  contentPadding: EdgeInsets.zero,
+                  child: Column(
+                    children: [
+                      for (final a in profile.addresses)
+                        RadioListTile<String>(
+                          value: a.id,
+                          title: Text('${a.label} · ${a.line1}'),
+                          subtitle: Text(a.summary),
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                    ],
+                  ),
                 ),
               TextButton.icon(
                 onPressed: _addAddress,
@@ -118,12 +125,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
               const Divider(height: 24),
               _sectionTitle('Payment'),
-              RadioListTile<String>(
-                value: 'COD',
+              RadioGroup<String>(
                 groupValue: 'COD',
                 onChanged: (_) {},
-                title: const Text('Cash on delivery'),
-                contentPadding: EdgeInsets.zero,
+                child: const RadioListTile<String>(
+                  value: 'COD',
+                  title: Text('Cash on delivery'),
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
               const ListTile(
                 enabled: false,
