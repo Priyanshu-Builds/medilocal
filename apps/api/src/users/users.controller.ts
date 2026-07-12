@@ -25,6 +25,15 @@ export class UsersController {
     return this.users.updateMe(user.sub, dto);
   }
 
+  @Delete()
+  @Auth('customer')
+  @ApiOperation({
+    summary: 'Delete my account — erases personal data (addresses, profile) and blocks future login',
+  })
+  deleteMe(@CurrentUser() user: JwtPayload) {
+    return this.users.deleteMe(user.sub);
+  }
+
   @Put('fcm-token')
   @Auth('customer', 'rider')
   @ApiOperation({ summary: 'Register this device for push notifications (customer or rider token)' })
