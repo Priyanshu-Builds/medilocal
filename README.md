@@ -95,12 +95,36 @@ To populate the boards without the mobile apps, place a couple of orders with th
 2. Project Settings → Service Accounts → **Generate new private key**; put `project_id`, `client_email`, `private_key` into `apps/api/.env` (`FIREBASE_*`).
 3. Add Android apps for `com.medilocal.customer` / `com.medilocal.rider` and drop `google-services.json` into each Flutter app when M3/M4 begin.
 
-## Do these early (they take days–weeks of lead time)
+## Production deployment (M5)
 
-- Razorpay KYC (test keys work immediately; live keys need business verification)
-- AWS account in ap-south-1 + apply for AWS Activate credits
-- Lawyer review of the marketplace model & T&Cs (e-pharmacy rules are evolving)
-- Collect partner shop drug-license copies and pharmacist registration numbers
+Single-box stack for the pilot — API + Postgres + Redis + Nginx via Docker Compose
+(scale path: ECS Fargate + RDS later).
+
+```bash
+cp apps/api/.env.example apps/api/.env.production   # fill in real secrets (NODE_ENV=production)
+cp .env.prod.example .env                           # Postgres creds + domain
+docker compose -f docker-compose.prod.yml up -d --build
+docker compose -f docker-compose.prod.yml exec api node_modules/.bin/prisma db seed   # once
+```
+
+- The API image self-applies migrations on boot and runs behind Nginx (TLS terminates there —
+  drop `fullchain.pem`/`privkey.pem` in `docker/nginx/certs/`).
+- **Hardening** (all on by default): helmet headers, rate limiting (10/min on auth), graceful
+  shutdown, unified error responses; Swagger and dev-login are **off** when `NODE_ENV=production`.
+- **Monitoring**: set `SENTRY_DSN` to turn on error reporting (API + apps); inert without it.
+- **Backups**: cron `scripts/backup-db.sh` for a nightly `pg_dump` → S3 with retention.
+- **Pre-pilot gate**: `pnpm --filter @medilocal/api test:e2e` walks a real order end-to-end
+  (COD + Razorpay webhook + refund) against a seeded DB; the CI `e2e` job runs it on every push.
+
+## Launch checklist (operational — needs your accounts, days–weeks of lead time)
+
+- [ ] **Razorpay** — KYC + live keys (test keys work now); set the live webhook to `/v1/payments/razorpay/webhook`
+- [ ] **Firebase** — project + Phone Auth; real `google-services.json` in each app; `FIREBASE_*` in `.env.production`
+- [ ] **AWS ap-south-1** — EC2/Lightsail host, private S3 bucket (prescriptions), domain + TLS cert; apply for Activate credits
+- [ ] **Play Store** — developer account, upload keystore, internal-track `.aab` (see [rider README](mobile/rider/README.md))
+- [ ] **Native config** — add the Android location/foreground-service/FCM manifest permissions when generating the release build
+- [ ] **Legal** — lawyer review of the marketplace model & T&Cs (e-pharmacy rules are evolving)
+- [ ] **Pilot partners** — 2–3 shops (drug-license copies + pharmacist reg numbers) and 1–2 riders onboarded via admin
 
 ## Roadmap
 
@@ -109,4 +133,5 @@ To populate the boards without the mobile apps, place a couple of orders with th
 - [x] **M2** — Dashboards: live orders board, Rx queue, CSV catalog import, shop/rider management, manual assignment
 - [x] **M3** — Customer app: search → cart → COD checkout → live tracking (Firebase OTP, Razorpay, Rx upload, map pin deferred until keys/device — see [mobile/customer/README.md](mobile/customer/README.md))
 - [x] **M4** — Rider app: duty shifts, task accept, pickup→delivery status flow, delivery-OTP handoff, COD cash ledger, live-location streaming (background GPS via `geolocator`/foreground-service, Firebase OTP, maps, Socket.IO deferred until keys/device — see [mobile/rider/README.md](mobile/rider/README.md))
-- [ ] **M5** — Launch hardening + pilot with 2–3 shops
+- [x] **M5 (engineering)** — API hardening (helmet, rate limits, graceful shutdown, unified errors), end-to-end pre-pilot test + CI gate, Sentry (env-gated), production Docker Compose stack (API + Postgres + Redis + Nginx) + DB backups, native release-config docs
+- [ ] **M5 (operational)** — Razorpay live KYC, Firebase keys, AWS provisioning, Play Store internal track, legal sign-off, onboard the pilot shops + riders (see the launch checklist above)

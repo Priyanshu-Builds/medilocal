@@ -66,3 +66,43 @@ only the source of a value:
 - **Maps / navigation** — `google_maps_flutter` pickup/drop pins and turn-by-turn hand-off.
 - **Socket.IO** — push the rider's live location straight to the customer's order room (the REST
   ingest endpoint stays as the durable/ sampled path).
+
+## Release build (Android) — M5 native config
+
+Platform folders are regenerated (not committed), so apply this native config to the
+generated `android/` when cutting a release build.
+
+**1. Permissions** — add to `android/app/src/main/AndroidManifest.xml`, above `<application>`:
+
+```xml
+<uses-permission android:name="android.permission.INTERNET"/>
+<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+<uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+<uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+<uses-permission android:name="android.permission.WAKE_LOCK"/>
+```
+
+The `flutter_foreground_task` service also needs, inside `<application>`:
+
+```xml
+<service android:name="com.pravera.flutter_foreground_task.service.ForegroundService"
+         android:foregroundServiceType="location" android:exported="false"/>
+```
+
+`ACCESS_BACKGROUND_LOCATION` is intentionally **not** requested — GPS only streams during an
+active delivery via the foreground service, which keeps the Play Store location review simple.
+
+**2. FCM** — drop `google-services.json` into `android/app/` and add the Google Services
+Gradle plugin (Firebase console gives the exact lines) once `firebase_messaging` is added.
+
+**3. Signing** — create an upload keystore, reference it from `android/key.properties`
+(gitignored) and `android/app/build.gradle.kts`. Never commit the keystore or `key.properties`.
+
+**4. Versioning** — bump `version:` in `pubspec.yaml` (`x.y.z+build`); the `+build` is the
+Play Store `versionCode` and must increase every upload.
+
+**5. Build** — `flutter build appbundle --release --dart-define=API_BASE_URL=https://api.yourdomain
+--dart-define=USE_DEV_LOGIN=false --dart-define=SENTRY_DSN=<dsn>` → upload the `.aab` to the
+Play Console internal track.

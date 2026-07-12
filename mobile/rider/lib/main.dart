@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'api/client.dart';
 import 'state/location_controller.dart';
 import 'state/session.dart';
@@ -8,22 +9,35 @@ import 'screens/login_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/tasks_screen.dart';
 
+/// Error monitoring is off unless a DSN is supplied at build time:
+///   flutter run --dart-define=SENTRY_DSN=https://...
+const _sentryDsn = String.fromEnvironment('SENTRY_DSN');
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final api = ApiClient();
   final session = SessionController(api);
   await session.load();
 
-  runApp(
-    MultiProvider(
-      providers: [
-        Provider<ApiClient>.value(value: api),
-        ChangeNotifierProvider<SessionController>.value(value: session),
-        ChangeNotifierProvider<LocationController>(create: (_) => LocationController(api)),
-      ],
-      child: const MediLocalRiderApp(),
-    ),
+  final app = MultiProvider(
+    providers: [
+      Provider<ApiClient>.value(value: api),
+      ChangeNotifierProvider<SessionController>.value(value: session),
+      ChangeNotifierProvider<LocationController>(create: (_) => LocationController(api)),
+    ],
+    child: const MediLocalRiderApp(),
   );
+
+  if (_sentryDsn.isEmpty) {
+    runApp(app);
+  } else {
+    await SentryFlutter.init(
+      (options) => options
+        ..dsn = _sentryDsn
+        ..tracesSampleRate = 0.0,
+      appRunner: () => runApp(app),
+    );
+  }
 }
 
 const brandOrange = Color(0xFFEA580C);

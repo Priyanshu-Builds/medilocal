@@ -1,9 +1,11 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
+import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from './prisma/prisma.service';
 
 @ApiTags('health')
 @Controller('health')
+@SkipThrottle() // monitoring/load-balancer polls must never be rate-limited
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 

@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { Auth } from '../common/auth.decorator';
 import { CurrentUser } from '../common/current-user.decorator';
@@ -8,6 +9,8 @@ import type { JwtPayload } from '../common/jwt-payload';
 
 @ApiTags('auth')
 @Controller('auth')
+// Credential + token endpoints are brute-force targets → 10 attempts/min per IP.
+@Throttle({ default: { limit: 10, ttl: 60_000 } })
 export class AuthController {
   constructor(private readonly auth: AuthService) {}
 

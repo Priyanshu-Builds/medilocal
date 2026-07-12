@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.dart_tool
+**/build
+**/.next
+**/.turbo
+mobile
+.git
+.github
+**/*.log
+**/.env
+**/.env.*
+!**/.env.example
