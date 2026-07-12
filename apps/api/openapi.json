@@ -246,6 +246,24 @@
         "tags": [
           "me"
         ]
+      },
+      "delete": {
+        "operationId": "UsersController_deleteMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete my account — erases personal data (addresses, profile) and blocks future login",
+        "tags": [
+          "me"
+        ]
       }
     },
     "/v1/me/fcm-token": {

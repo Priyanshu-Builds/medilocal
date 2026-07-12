@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { TERMINAL_ORDER_STATES } from '@medilocal/shared';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateAddressDto, UpdateAddressDto, UpdateMeDto } from './dto';
 
@@ -28,6 +29,50 @@ export class UsersService {
       data: { name: dto.name, email: dto.email },
       select: { id: true, phone: true, name: true, email: true },
     });
+  }
+
+  /**
+   * Right-to-erasure (DPDP Act) account deletion. Orders are financial/tax
+   * records we must retain, so we don't hard-delete the row — we scrub every
+   * piece of personal data instead:
+   *   - saved addresses are deleted outright (live PII, no retention need),
+   *   - each order's frozen addressSnapshot is redacted (the order keeps its
+   *     own zoneId column for reporting, so no analytics value is lost),
+   *   - the user row is anonymised: identity fields nulled, phone replaced with
+   *     a unique tombstone, and the account blocked so it can never log in again.
+   * Blocked while any order is still in flight — those need a real address to
+   * be delivered; the customer must let them finish or cancel them first.
+   */
+  async deleteMe(userId: string) {
+    const activeOrders = await this.prisma.order.count({
+      where: { userId, state: { notIn: [...TERMINAL_ORDER_STATES] } },
+    });
+    if (activeOrders > 0) {
+      throw new BadRequestException(
+        `You have ${activeOrders} order(s) still in progress. Wait for them to be delivered or cancel them before deleting your account.`,
+      );
+    }
+
+    await this.prisma.$transaction([
+      this.prisma.address.deleteMany({ where: { userId } }),
+      this.prisma.order.updateMany({
+        where: { userId },
+        data: { addressSnapshot: { redacted: true } },
+      }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: {
+          name: null,
+          email: null,
+          firebaseUid: null,
+          fcmToken: null,
+          phone: `deleted:${userId}`, // keep the @unique constraint satisfied
+          isBlocked: true,
+        },
+      }),
+    ]);
+
+    return { ok: true, deletedAt: new Date().toISOString() };
   }
 
   /** Customer and rider tokens both land here; each kind has its own row/table. */
