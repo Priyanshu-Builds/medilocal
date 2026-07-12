@@ -61,6 +61,8 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # ts-jest compiles the app, which imports @medilocal/shared — build it first.
+      - run: pnpm --filter @medilocal/shared build
       - run: pnpm --filter @medilocal/api db:deploy
       - run: pnpm --filter @medilocal/api db:seed
       - run: pnpm --filter @medilocal/api test:e2e
