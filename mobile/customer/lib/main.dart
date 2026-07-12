@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'api/client.dart';
+import 'theme.dart';
 import 'state/cart.dart';
 import 'state/session.dart';
 import 'screens/account_screen.dart';
@@ -40,8 +41,9 @@ Future<void> main() async {
   }
 }
 
-const brandGreen = Color(0xFF059669);
-const brandGreenDark = Color(0xFF047857);
+// Brand accent (was green pre-reskin; now the warm "medicine store" orange).
+const brandGreen = kPrimary;
+const brandGreenDark = kPrimaryDark;
 
 class MediLocalCustomerApp extends StatelessWidget {
   const MediLocalCustomerApp({super.key});
@@ -51,17 +53,7 @@ class MediLocalCustomerApp extends StatelessWidget {
     return MaterialApp(
       title: 'MediLocal',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: brandGreen),
-        useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
+      theme: buildAppTheme(),
       home: const _AuthGate(),
     );
   }

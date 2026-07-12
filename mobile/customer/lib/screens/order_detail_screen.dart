@@ -92,9 +92,9 @@ class _OrderDetailScreenState extends State<OrderDetailScreen> {
           Container(
             margin: const EdgeInsets.only(bottom: 16),
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: brandGreen.withValues(alpha: 0.10), borderRadius: BorderRadius.circular(12)),
             child: const Row(children: [
-              Icon(Icons.check_circle, color: Colors.green),
+              Icon(Icons.check_circle, color: brandGreen),
               SizedBox(width: 8),
               Expanded(child: Text('Order placed! The pharmacy will confirm shortly.')),
             ]),

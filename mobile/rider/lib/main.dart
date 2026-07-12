@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'api/client.dart';
+import 'theme.dart';
 import 'state/location_controller.dart';
 import 'state/session.dart';
 import 'screens/earnings_screen.dart';
@@ -40,8 +41,9 @@ Future<void> main() async {
   }
 }
 
-const brandOrange = Color(0xFFEA580C);
-const brandOrangeDark = Color(0xFFC2410C);
+// Brand accent — aligned to the shared "medicine store" orange design system.
+const brandOrange = kPrimary;
+const brandOrangeDark = kPrimaryDark;
 
 class MediLocalRiderApp extends StatelessWidget {
   const MediLocalRiderApp({super.key});
@@ -51,17 +53,7 @@ class MediLocalRiderApp extends StatelessWidget {
     return MaterialApp(
       title: 'MediLocal Rider',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: brandOrange),
-        useMaterial3: true,
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
-          ),
-        ),
-      ),
+      theme: buildAppTheme(),
       home: const _AuthGate(),
     );
   }
